@@ -1,10 +1,13 @@
 package org.jenkinsci.plugins.github.pullrequest;
 
 import hudson.Functions;
+import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.kohsuke.github.GHIssueComment;
 import org.kohsuke.github.GHLabel;
 import org.kohsuke.github.GHPullRequest;
 import org.kohsuke.github.GHRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.annotation.CheckForNull;
 import java.io.IOException;
@@ -13,8 +16,8 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import static org.apache.commons.lang3.builder.ToStringStyle.SHORT_PREFIX_STYLE;
 
 /**
  * Maintains state about a Pull Request for a particular Jenkins job.  This is what understands the current state
@@ -47,6 +50,7 @@ public class GitHubPRPullRequest {
         userLogin = pr.getUser().getLogin();
         number = pr.getNumber();
         prUpdatedAt = pr.getUpdatedAt();
+        // https://github.com/kohsuke/github-api/issues/178
         issueUpdatedAt = pr.getIssueUpdatedAt();
         headSha = pr.getHead().getSha();
         headRef = pr.getHead().getRef();
@@ -90,8 +94,6 @@ public class GitHubPRPullRequest {
             mergeable = false;
         }
         sourceRepoOwner = remoteRepo.getOwnerName();
-
-//        LOGGER.log(Level.INFO, "Created {0}", toString());
     }
 
     public int getNumber() {
@@ -167,22 +169,21 @@ public class GitHubPRPullRequest {
 
     @Override
     public String toString() {
-        return "GitHubPRPullRequest{" +
-                "number=" + number +
-                ", issueUpdatedAt=" + issueUpdatedAt +
-                ", title='" + title + '\'' +
-                ", prUpdatedAt=" + prUpdatedAt +
-                ", headSha='" + headSha + '\'' +
-                ", headRef='" + headRef + '\'' +
-                ", mergeable=" + mergeable +
-                ", baseRef='" + baseRef + '\'' +
-                ", userEmail='" + userEmail + '\'' +
-                ", userLogin='" + userLogin + '\'' +
-                ", htmlUrl=" + htmlUrl +
-                ", labels=" + labels +
-                ", lastCommentCreatedAt=" + lastCommentCreatedAt +
-                ", sourceRepoOwner=" + sourceRepoOwner +
-                '}';
+        return new ToStringBuilder(this, SHORT_PREFIX_STYLE)
+                .append("number", number)
+                .append("issueUpdatedAt", issueUpdatedAt)
+                .append("title", title)
+                .append("prUpdatedAt", prUpdatedAt)
+                .append("headSha", headSha)
+                .append("headRef", headRef)
+                .append("mergeable", mergeable)
+                .append("baseRef", baseRef)
+                .append("userEmail", userEmail)
+                .append("userLogin", userLogin)
+                .append("htmlUrl", htmlUrl)
+                .append("labels", labels)
+                .append("lastCommentCreatedAt", lastCommentCreatedAt)
+                .append("sourceRepoOwner", sourceRepoOwner).build();
     }
 
     @Override

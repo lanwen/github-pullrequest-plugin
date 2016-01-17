@@ -81,9 +81,8 @@ public class JobRunnerForCause implements Predicate<GitHubPRCause> {
             LOGGER.info(sb.toString());
 
             // remote connection
-            GitHub connection = githubFor(URI.create(cause.getHtmlUrl().toString()));
             if (trigger.isPreStatus()) {
-                connection.getRepository(trigger.getRepoFullName(job))
+                trigger.getRemoteRepo()
                         .createCommitStatus(cause.getHeadSha(),
                                 GHCommitState.PENDING,
                                 null,

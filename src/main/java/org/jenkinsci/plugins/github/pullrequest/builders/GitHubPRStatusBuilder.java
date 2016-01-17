@@ -64,7 +64,7 @@ public class GitHubPRStatusBuilder extends Builder {
                         statusMessage.expandAll(build, listener),
                         build.getProject().getFullName());
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             listener.getLogger().println("Can't update build description");
             LOGGER.error("Can't set commit status", e);
         }

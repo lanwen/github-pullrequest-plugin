@@ -22,7 +22,7 @@ public class GitHubPRPollingLogAction implements Action {
         this.project = project;
     }
 
-    public AbstractProject<?,?> getOwner() {
+    public AbstractProject<?, ?> getOwner() {
         return project;
     }
 
@@ -47,14 +47,15 @@ public class GitHubPRPollingLogAction implements Action {
 
     /**
      * Writes the annotated log to the given output.
+     *
      * @since 1.350
      */
     public void writeLogTo(XMLOutput out) throws IOException {
         new AnnotatedLargeText<>(getLogFile(),
-                Charset.defaultCharset(),true,this).writeHtmlTo(0,out.asWriter());
+                Charset.defaultCharset(), true, this).writeHtmlTo(0, out.asWriter());
     }
 
     public File getLogFile() {
-        return new File(project.getRootDir(),"github-pullrequest-polling.log");
+        return new File(project.getRootDir(), "github-pullrequest-polling.log");
     }
 }

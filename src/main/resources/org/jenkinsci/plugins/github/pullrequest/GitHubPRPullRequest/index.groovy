@@ -1,8 +1,6 @@
 package org.jenkinsci.plugins.github.pullrequest.GitHubPRPullRequest
 
 import com.google.common.base.Joiner
-import hudson.Functions
-import jenkins.model.Jenkins
 
 def f = namespace(lib.FormTagLib);
 def l = namespace(lib.LayoutTagLib);
@@ -27,7 +25,7 @@ table(width:"1000px") {
     }
     tr(){
         td("Target branch: " + my.baseRef)
-        td("Is mergeable? " + my.mergeable)
+        td(my.mergeable ? "PR mergeable " : "PR NOT mergeable")
         td("Last commented at " + my.lastCommentCreatedAt)
     }
     tr() {

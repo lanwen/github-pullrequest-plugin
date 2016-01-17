@@ -43,17 +43,18 @@ import java.net.URI;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
 import static com.google.common.base.Charsets.UTF_8;
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 import static com.google.common.base.Predicates.and;
 import static com.google.common.base.Predicates.in;
 import static com.google.common.base.Predicates.not;
 import static com.google.common.base.Predicates.notNull;
 import static java.text.DateFormat.getDateTimeInstance;
-import static org.apache.commons.lang.StringUtils.isBlank;
 import static org.apache.commons.lang.StringUtils.isNotBlank;
 import static org.jenkinsci.plugins.github.config.GitHubServerConfig.withHost;
 import static org.jenkinsci.plugins.github.pullrequest.GitHubPRTriggerMode.CRON;
@@ -110,7 +111,7 @@ public class GitHubPRTrigger extends Trigger<AbstractProject<?, ?>> {
     private GitHubPRBranchRestriction branchRestriction;
 
     // for performance
-    private transient String repoFullName;
+    private transient GitHubRepositoryName repoName;
     private transient GHRepository remoteRepository;
 
     @CheckForNull
@@ -240,8 +241,8 @@ public class GitHubPRTrigger extends Trigger<AbstractProject<?, ?>> {
         });
     }
 
-    public String getRepoFullName(Job<?, ?> job) {
-        if (isBlank(repoFullName)) {
+    public GitHubRepositoryName getRepoFullName(Job<?, ?> job) {
+        if (repoName == null) {
 
             checkNotNull(job, "job object is null, race condition?");
             GithubProjectProperty ghpp = job.getProperty(GithubProjectProperty.class);
@@ -253,19 +254,18 @@ public class GitHubPRTrigger extends Trigger<AbstractProject<?, ?>> {
 
             checkNotNull(repo, "Invalid GitHub project url: %s", ghpp.getProjectUrl().baseUrl());
 
-            repoFullName = String.format("%s/%s", repo.getUserName(), repo.getRepositoryName());
+            repoName = repo;
         }
 
-        return repoFullName;
+        return repoName;
     }
 
-    public GHRepository getRemoteRepo() throws IOException {
+    public GHRepository getRemoteRepo() {
         if (remoteRepository == null) {
-            String repo = getRepoFullName(job);
-            GithubProjectProperty ghpp = job.getProperty(GithubProjectProperty.class);
-
-            remoteRepository = DescriptorImpl.githubFor(URI.create(ghpp.getProjectUrl().baseUrl()))
-                    .getRepository(repo);
+            Iterator<GHRepository> resolved = getRepoFullName(job).resolve().iterator();
+            checkState(resolved.hasNext(), "Can't get remote GH repo for %s", job.getName());
+            
+            remoteRepository = resolved.next();
         }
         return remoteRepository;
     }
@@ -345,7 +345,7 @@ public class GitHubPRTrigger extends Trigger<AbstractProject<?, ?>> {
             listener.debug("GitHub rate limit before check: {}", rateLimitBefore);
 
             // get local and remote list of PRs
-            GHRepository remoteRepository = github.getRepository(getRepoFullName(job));
+            GHRepository remoteRepository = getRemoteRepo();
             Set<GHPullRequest> remotePulls = pullRequestsToCheck(prNumber, remoteRepository, localRepository);
 
             Set<GHPullRequest> prepeared = from(remotePulls)

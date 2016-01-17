@@ -1,5 +1,6 @@
 package org.jenkinsci.plugins.github.pullrequest;
 
+import com.cloudbees.jenkins.GitHubRepositoryName;
 import com.coravy.hudson.plugins.github.GithubProjectProperty;
 import hudson.Extension;
 import hudson.XmlFile;
@@ -16,6 +17,8 @@ import java.util.HashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static org.jenkinsci.plugins.github.pullrequest.utils.PRHelperFunctions.asFullRepoName;
+
 /**
  * @author Kanstantsin Shautsou
  */
@@ -29,9 +32,8 @@ public class GitHubPRRepositoryFactory extends TransientProjectActionFactory {
             if (project.getTrigger(GitHubPRTrigger.class) != null) {
                 return Collections.singleton(forProject(project));
             }
-        } catch (Throwable t) {
-            LOGGER.warn("Bad configured project {} - {}", project.getFullName(), t.getMessage());
-            return Collections.emptyList();
+        } catch (Exception e) {
+            LOGGER.warn("Bad configured project {} - {}", project.getFullName(), e.getMessage());
         }
 
         return Collections.emptyList();
@@ -42,7 +44,7 @@ public class GitHubPRRepositoryFactory extends TransientProjectActionFactory {
         XmlFile configFile = new XmlFile(new File(job.getRootDir(), GitHubPRRepository.FILE));
 
         GitHubPRTrigger trigger = job.getTrigger(GitHubPRTrigger.class);
-        String repoFullName = trigger.getRepoFullName(job);
+        GitHubRepositoryName repo = trigger.getRepoFullName(job);
 
         GithubProjectProperty property = job.getProperty(GithubProjectProperty.class);
         String githubUrl = property.getProjectUrl().toString();
@@ -52,10 +54,12 @@ public class GitHubPRRepositoryFactory extends TransientProjectActionFactory {
                 localRepository = (GitHubPRRepository) configFile.read();
             } catch (IOException e) {
                 LOGGER.info("Can't read saved repository, creating new one", e);
-                localRepository = new GitHubPRRepository(repoFullName, githubUrl, new HashMap<Integer, GitHubPRPullRequest>());
+                localRepository = new GitHubPRRepository(asFullRepoName(repo), githubUrl, 
+                        new HashMap<Integer, GitHubPRPullRequest>());
             }
         } else {
-            localRepository = new GitHubPRRepository(repoFullName, githubUrl, new HashMap<Integer, GitHubPRPullRequest>());
+            localRepository = new GitHubPRRepository(asFullRepoName(repo), githubUrl, 
+                    new HashMap<Integer, GitHubPRPullRequest>());
         }
 
         localRepository.setProject(job);

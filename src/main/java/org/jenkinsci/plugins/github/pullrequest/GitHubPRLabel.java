@@ -23,7 +23,7 @@ public class GitHubPRLabel implements Describable<GitHubPRLabel> {
 
     @DataBoundConstructor
     public GitHubPRLabel(String labels) {
-        this.labels = new HashSet<String>(Arrays.asList(labels.split("\n")));
+        this.labels = new HashSet<>(Arrays.asList(labels.split("\n")));
     }
 
     //for UI binding

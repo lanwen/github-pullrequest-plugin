@@ -1,21 +1,27 @@
 package org.jenkinsci.plugins.github.pullrequest.builders;
 
 import hudson.Launcher;
-import hudson.model.*;
+import hudson.model.AbstractBuild;
+import hudson.model.BuildListener;
+import hudson.model.ItemGroup;
+import hudson.model.Project;
 import org.jenkinsci.plugins.github.pullrequest.GitHubPRCause;
 import org.jenkinsci.plugins.github.pullrequest.GitHubPRMessage;
 import org.jenkinsci.plugins.github.pullrequest.GitHubPRTrigger;
-import org.junit.Assert;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kohsuke.github.GHRepository;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 
-import static org.mockito.Mockito.*;
-
 import java.io.IOException;
 import java.io.PrintStream;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.when;
 
 /**
  * @author Alina Karpovich
@@ -25,51 +31,62 @@ public class GitHubPRStatusBuilderTest {
     private static final String DEFAULT_MESSAGE = "$GITHUB_PR_COND_REF run started";
     private static final String CUSTOM_MESSAGE = "Custom run message";
 
-    @Mock private AbstractBuild<?, ?> build;
-    @Mock private Launcher launcher;
-    @Mock private BuildListener listener;
-    @Mock private Project project;
-    @Mock private GitHubPRTrigger trigger;
-    @Mock private GitHubPRCause cause;
-    @Mock private PrintStream logger;
-    @Mock private GitHubPRTrigger.DescriptorImpl triggerDescriptor;
-    @Mock private GHRepository remoteRepository;
-    @Mock private GitHubPRMessage message;
-    @Mock private ItemGroup itemGroup;
+    @Mock
+    private AbstractBuild<?, ?> build;
+    @Mock
+    private Launcher launcher;
+    @Mock
+    private BuildListener listener;
+    @Mock
+    private Project project;
+    @Mock
+    private GitHubPRTrigger trigger;
+    @Mock
+    private GitHubPRCause cause;
+    @Mock
+    private PrintStream logger;
+    @Mock
+    private GitHubPRTrigger.DescriptorImpl triggerDescriptor;
+    @Mock
+    private GHRepository remoteRepository;
+    @Mock
+    private GitHubPRMessage message;
+    @Mock
+    private ItemGroup itemGroup;
 
     @Test
     public void createBuilder() {
         GitHubPRStatusBuilder builder = new GitHubPRStatusBuilder();
 
-        Assert.assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
+        assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
     }
 
     @Test
     public void createBuilderWithNullMessage() {
         GitHubPRStatusBuilder builder = new GitHubPRStatusBuilder(null);
 
-        Assert.assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
+        assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
     }
 
     @Test
     public void createBuilderWithNullMessageContent() {
         GitHubPRStatusBuilder builder = new GitHubPRStatusBuilder(new GitHubPRMessage(null));
 
-        Assert.assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
+        assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
     }
 
     @Test
     public void createBuilderWithEmptyMessage() {
         GitHubPRStatusBuilder builder = new GitHubPRStatusBuilder(new GitHubPRMessage(""));
 
-        Assert.assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
+        assertEquals(DEFAULT_MESSAGE, builder.getStatusMessage().getContent());
     }
 
     @Test
     public void createBuilderWithCustomMessage() {
         GitHubPRStatusBuilder builder = new GitHubPRStatusBuilder(new GitHubPRMessage(CUSTOM_MESSAGE));
 
-        Assert.assertEquals(CUSTOM_MESSAGE, builder.getStatusMessage().getContent());
+        assertEquals(CUSTOM_MESSAGE, builder.getStatusMessage().getContent());
     }
 
     @Test
@@ -78,7 +95,7 @@ public class GitHubPRStatusBuilderTest {
 
         triggerExpectations(null);
 
-        Assert.assertTrue(builder.perform(build, launcher, listener));
+        assertTrue(builder.perform(build, launcher, listener));
     }
 
     @Test
@@ -88,7 +105,7 @@ public class GitHubPRStatusBuilderTest {
         triggerExpectations(trigger);
         when(build.getCause(GitHubPRCause.class)).thenReturn(null);
 
-        Assert.assertTrue(builder.perform(build, launcher, listener));
+        assertTrue(builder.perform(build, launcher, listener));
     }
 
     @Test
@@ -98,10 +115,10 @@ public class GitHubPRStatusBuilderTest {
         triggerExpectations(trigger);
         when(build.getCause(GitHubPRCause.class)).thenReturn(cause);
         urlExpectations();
-        when(trigger.getRemoteRepo()).thenThrow(new IOException("on getting remote repo"));
+        when(trigger.getRemoteRepo()).thenThrow(new IllegalStateException("on getting remote repo"));
         when(listener.getLogger()).thenReturn(logger);
 
-        Assert.assertTrue(builder.perform(build, launcher, listener));
+        assertTrue(builder.perform(build, launcher, listener));
     }
 
     @Test
@@ -122,7 +139,7 @@ public class GitHubPRStatusBuilderTest {
 
         doThrow(new IOException("on setting description")).when(build).setDescription(any(String.class));
 
-        Assert.assertTrue(builder.perform(build, launcher, listener));
+        assertTrue(builder.perform(build, launcher, listener));
     }
 
     private void triggerExpectations(GitHubPRTrigger expectedTrigger) {
